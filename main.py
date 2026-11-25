@@ -1,29 +1,40 @@
-"""Status Report Comedy Sprint — entry program.
+#!/usr/bin/env python3
+"""Status Report Comedy Sprint — make.fun entry.
 
-Writes one line, status-report line, to /output/entry.txt
-(or $MAKEFUN_OUTPUT_DIR/entry.txt).
+Produces the entry's one line in ``entry.txt`` inside the output
+directory (``$MAKEFUN_OUTPUT_DIR`` when set, otherwise ``/output``).
 
-Stdlib only, no network, fully deterministic: the same bytes every run.
+Standard library only. No network access, no randomness, so every
+run writes exactly the same bytes, with no trailing newline added.
 """
 
 import os
+import sys
 from pathlib import Path
 
-LINE = "This week I completed 47 tasks, 46 of which were writing this status report."
+# The entry line. Keep this string exactly as-is.
+ENTRY_LINE = "This week I completed 47 tasks, 46 of which were writing this status report."
+
+# This bounty's sealed-scorer gate: UTF-8 text, non-blank, at most 200 chars.
+MAX_CHARS = 200
 
 OUTPUT_DIR = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
-OUTPUT_PATH = OUTPUT_DIR / "entry.txt"
+OUTPUT_FILE = OUTPUT_DIR / "entry.txt"
+
+
+def validate(line: str, limit: int) -> None:
+    """Refuse to write an entry the scorer would reject outright."""
+    if not 1 <= len(line) <= limit:
+        sys.exit(f"entry must be 1-{limit} characters, got {len(line)}")
+    if not line.strip():
+        sys.exit("entry must not be only white space")
+    line.encode("utf-8")
 
 
 def main() -> None:
-    # Gate mirror: the sealed scorer requires UTF-8 text of 1-200 chars,
-    # not only white space. Refuse to write an invalid entry.
-    text = LINE
-    assert 1 <= len(text) <= 200, "line must be 1-200 characters"
-    assert text.strip(), "line must not be only white space"
-    text.encode("utf-8")
+    validate(ENTRY_LINE, MAX_CHARS)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(text, encoding="utf-8")
+    OUTPUT_FILE.write_text(ENTRY_LINE, encoding="utf-8")
 
 
 if __name__ == "__main__":
